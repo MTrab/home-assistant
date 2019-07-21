@@ -27,6 +27,10 @@ CONFIG_SCHEMA = vol.Schema({
     })
 }, extra=vol.ALLOW_EXTRA)
 
+SERVICE_START = 'start'
+SERVICE_PAUSE = 'pause'
+SERVICE_HOME = 'home'
+
 
 API_WORX_SENSORS = {
     'battery': {
@@ -78,16 +82,47 @@ async def async_setup(hass, config):
     cloud_password = config[DOMAIN][CONF_PASSWORD]
     cloud_device_id = config[DOMAIN][CONF_DEVICE]
 
-    client = pyworxcloud.WorxCloud(cloud_email,
+    client = pyworxcloud.WorxCloud()
+    auth = await client.initialize(cloud_email,
                                    cloud_password,
                                    cloud_device_id)
 
-    if not client:
+    if not auth:
         return False
 
     api = WorxLandroidAPI(hass, client, config)
     async_track_time_interval(hass, api.async_update, SCAN_INTERVAL)
     hass.data[LANDROID_API] = api
+
+    async def handle_start(call):
+        """Handle start service call."""
+        client.start()
+
+    hass.services.async_register(
+        DOMAIN,
+        SERVICE_START,
+        handle_start
+    )
+
+    async def handle_pause(call):
+        """Handle pause service call."""
+        client.pause()
+
+    hass.services.async_register(
+        DOMAIN,
+        SERVICE_PAUSE,
+        handle_pause
+    )
+
+    async def handle_home(call):
+        """Handle pause service call."""
+        client.stop()
+
+    hass.services.async_register(
+        DOMAIN,
+        SERVICE_HOME,
+        handle_home
+    )
 
     return True
 
@@ -109,10 +144,10 @@ class WorxLandroidAPI:
         sensor_info.append(info)
 
         load_platform(self._hass,
-                      'sensor',
-                      DOMAIN,
-                      sensor_info,
-                      self.config)
+                            'sensor',
+                            DOMAIN,
+                            sensor_info,
+                            self.config)
 
     def get_data(self, sensor_type):
         """Get data from state cache."""
