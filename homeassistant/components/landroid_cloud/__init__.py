@@ -2,7 +2,6 @@
 from datetime import timedelta
 import logging
 
-import async_timeout
 import voluptuous as vol
 
 from homeassistant.const import CONF_DEVICE, CONF_EMAIL, CONF_PASSWORD
@@ -85,10 +84,10 @@ async def async_setup(hass, config):
     cloud_device_id = config[DOMAIN][CONF_DEVICE]
 
     client = pyworxcloud.WorxCloud()
-    async with async_timeout.timeout(10):
-        auth = await client.initialize(cloud_email, cloud_password, cloud_device_id)
+    auth = await client.initialize(cloud_email, cloud_password, cloud_device_id)
 
     if not auth:
+        _LOGGER.warning("Fejl ved auth!")
         return False
 
     api = WorxLandroidAPI(hass, client, config)
@@ -127,7 +126,7 @@ class WorxLandroidAPI:
 
         sensor_info = []
         info = {}
-        info["name"] = "{}_{}".format(DEFAULT_NAME, self._client.name)
+        info["name"] = f"{DEFAULT_NAME}_{self._client.name}"
         info["friendly"] = self._client.name
         sensor_info.append(info)
 
@@ -138,8 +137,9 @@ class WorxLandroidAPI:
         methods = API_WORX_SENSORS[sensor_type]
         data = {}
         for prop, attr in methods["state"].items():
-            prop_data = getattr(self._client, prop)
-            data[attr] = prop_data
+            if hasattr(self._client, prop):
+                prop_data = getattr(self._client, prop)
+                data[attr] = prop_data
         return data
 
     async def async_update(self, now=None):

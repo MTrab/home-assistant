@@ -1756,7 +1756,7 @@ pywebpush==1.9.2
 pywemo==0.4.34
 
 # homeassistant.components.landroid_cloud
-pyworxcloud==1.1.1
+pyworxcloud==1.2.8
 
 # homeassistant.components.xeoma
 pyxeoma==1.4.1

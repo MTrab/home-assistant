@@ -204,6 +204,7 @@ homeassistant/components/knx/* @Julius2342
 homeassistant/components/kodi/* @armills
 homeassistant/components/konnected/* @heythisisnate @kit-klein
 homeassistant/components/lametric/* @robbiet480
+homeassistant/components/landroid_cloud/* @MTrab
 homeassistant/components/launch_library/* @ludeeus
 homeassistant/components/lcn/* @alengwenus
 homeassistant/components/life360/* @pnbruckner

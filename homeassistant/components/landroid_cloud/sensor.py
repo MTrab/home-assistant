@@ -1,9 +1,8 @@
 """Support for monitoring Worx Landroid Sensors."""
-from datetime import datetime, timedelta
 import logging
-import time
 
 from homeassistant.components import sensor
+from homeassistant.const import STATE_UNKNOWN
 from homeassistant.core import callback
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.entity import Entity
@@ -22,10 +21,10 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
     api = hass.data[LANDROID_API]
 
     info = discovery_info[0]
-    for sensor in API_WORX_SENSORS:
-        name = '{}_{}'.format(info['name'].lower(), sensor.lower())
-        friendly_name = '{} {}'.format(info['friendly'], sensor)
-        sensor_type = sensor
+    for tSensor in API_WORX_SENSORS:
+        name = "{}_{}".format(info["name"].lower(), tSensor.lower())
+        friendly_name = "{} {}".format(info["friendly"], tSensor)
+        sensor_type = tSensor
         _LOGGER.debug("Init Landroid %s sensor", sensor_type)
         entity = LandroidSensor(api, name, sensor_type, friendly_name)
         entities.append(entity)
@@ -65,12 +64,12 @@ class LandroidSensor(Entity):
     @property
     def unit_of_measurement(self):
         """Return the unit of measurement of this entity, if any."""
-        return API_WORX_SENSORS[self._sensor_type]['unit']
+        return API_WORX_SENSORS[self._sensor_type]["unit"]
 
     @property
     def icon(self):
         """Icon to use in the frontend."""
-        return API_WORX_SENSORS[self._sensor_type]['icon']
+        return API_WORX_SENSORS[self._sensor_type]["icon"]
 
     @property
     def should_poll(self):
@@ -89,8 +88,7 @@ class LandroidSensor(Entity):
 
     async def async_added_to_hass(self):
         """Connect update callbacks."""
-        async_dispatcher_connect(
-            self.hass, UPDATE_SIGNAL, self.update_callback)
+        async_dispatcher_connect(self.hass, UPDATE_SIGNAL, self.update_callback)
 
     def _get_data(self):
         """Return new data from the api cache."""
@@ -101,7 +99,12 @@ class LandroidSensor(Entity):
     def update(self):
         """Update the sensor."""
         data = self._get_data()
-        state = data.pop('state')
-        _LOGGER.debug("Mower %s State %s", self._name, state)
-        self._attributes.update(data)
-        self._state = state
+        if "state" in data:
+            _LOGGER.debug(data)
+            state = data.pop("state")
+            _LOGGER.debug("Mower %s State %s", self._name, state)
+            self._attributes.update(data)
+            self._state = state
+        else:
+            _LOGGER.debug("Something went wrong when updating state")
+            self._state = STATE_UNKNOWN
